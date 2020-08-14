@@ -23,7 +23,7 @@ func main() {
 
 	router := fasthttprouter.New()
 	router.GET("/v1/homedepot/multipleproduct", handleMultipleProduct)
-	log.Fatal(fasthttp.ListenAndServe(":8081", router.Handler))
+	log.Fatal(fasthttp.ListenAndServe(":3001", router.Handler))
 }
 
 func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
