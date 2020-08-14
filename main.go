@@ -34,7 +34,7 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 	fmt.Println(productList)
 	fmt.Println(storeList)
 	finalValues, err := homedepot.GetHomeDepotMultipleProductData(productList,storeList)
-	if err!=nil{
+	if err==nil{
 		sheets.ClearSheet(configs.Configurations.ClearMultipleProductResponseSheetNameWithRange)
 		sheets.BatchWrite(configs.Configurations.MultipleProductResponseSheetNameWithRange, finalValues)
 		ctx.Response.Header.Set("Content-Type", "application/json")
