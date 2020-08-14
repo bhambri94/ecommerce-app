@@ -10,12 +10,10 @@ import (
 type Configs struct {
 	SpreadsheetID                                  string `json:"SpreadsheetID"`
 	SheetNameWithRange                             string `json:"SheetNameWithRange"`
-	MultipleProductRequestSheetNameWithRange       string `json:"MultipleProductRequestSheetNameWithRange"`
+	ProductRequestSheetNameWithRange               string `json:"ProductRequestSheetNameWithRange"`
 	MultipleProductResponseSheetNameWithRange      string `json:"MultipleProductResponseSheetNameWithRange"`
 	ClearMultipleProductResponseSheetNameWithRange string `json:"ClearMultipleProductResponseSheetNameWithRange"`
-	MultipleStoreRequestSheetNameWithRange         string `json:"MultipleStoreRequestSheetNameWithRange"`
-	MultipleStoreResponseSheetNameWithRange        string `json:"MultipleStoreResponseSheetNameWithRange"`
-	ClearMultipleStoreResponseSheetNameWithRange   string `json:"ClearMultipleStoreResponseSheetNameWithRange"`
+	StoreRequestSheetNameWithRange                 string `json:"StoreRequestSheetNameWithRange"`
 }
 
 var (
