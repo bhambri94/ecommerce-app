@@ -107,7 +107,7 @@ func Read(readRange string) {
 	}
 }
 
-func BatchWrite(SheetName string, value [][]interface{}) {
+func BatchWrite(SheetName string, value [][]interface{}) error {
 	if srv == nil {
 		srv = getClient()
 	}
@@ -122,10 +122,13 @@ func BatchWrite(SheetName string, value [][]interface{}) {
 	fmt.Println("Writing data to Google Sheets with data")
 	_, err := srv.Spreadsheets.Values.BatchUpdate(spreadsheetId, rb).Context(context.Background()).Do()
 	if err != nil {
-		log.Fatalf("Unable to retrieve data from sheet. %v", err)
+		fmt.Println("Unable to retrieve data from sheet. %v", err)
+		fmt.Println(err)
+		return err
 	} else {
 		fmt.Println("Data has been successfully pushed to Google Sheet")
 	}
+	return nil
 }
 
 type BatchGetResponse struct {
@@ -137,7 +140,7 @@ type BatchGetResponse struct {
 	} `json:"valueRanges"`
 }
 
-func BatchGet(SheetRange string) [][]string {
+func BatchGet(SheetRange string) ([][]string, error) {
 	ranges := []string{SheetRange}
 	if srv == nil {
 		srv = getClient()
@@ -145,7 +148,8 @@ func BatchGet(SheetRange string) [][]string {
 	spreadsheetId = config.Configurations.SpreadsheetID
 	resp, err := srv.Spreadsheets.Values.BatchGet(spreadsheetId).Ranges(ranges...).Context(context.Background()).Do()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return nil, err
 	}
 
 	a, _ := resp.MarshalJSON()
@@ -154,17 +158,17 @@ func BatchGet(SheetRange string) [][]string {
 	var batchGetResponse BatchGetResponse
 	error := json.Unmarshal(a, &batchGetResponse)
 	if error != nil {
-		panic(error)
+		fmt.Println(err)
+		return nil, err
 	}
-	return batchGetResponse.ValueRanges[0].Values
+	return batchGetResponse.ValueRanges[0].Values, nil
 }
 
-func BatchAppend(SheetName string, value [][]interface{}) {
+func BatchAppend(SheetName string, value [][]interface{}) error {
 	ctx := context.Background()
 	if srv == nil {
 		srv = getClient()
 	}
-
 	spreadsheetId := config.Configurations.SpreadsheetID
 	valueInputOption := "RAW"
 	insertDataOption := "INSERT_ROWS"
@@ -175,12 +179,14 @@ func BatchAppend(SheetName string, value [][]interface{}) {
 
 	resp, err := srv.Spreadsheets.Values.Append(spreadsheetId, SheetName, rb).ValueInputOption(valueInputOption).InsertDataOption(insertDataOption).Context(ctx).Do()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return err
 	}
 	fmt.Printf("%#v\n", resp)
+	return nil
 }
 
-func ClearSheet(SheetName string) {
+func ClearSheet(SheetName string) error {
 	readRange := SheetName
 	var itt bool
 	if srv == nil {
@@ -208,7 +214,8 @@ func ClearSheet(SheetName string) {
 		}
 		_, err := srv.Spreadsheets.BatchUpdate(spreadsheetId, rbb).Context(context.Background()).Do()
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return err
 		}
 
 	} else {
@@ -217,7 +224,9 @@ func ClearSheet(SheetName string) {
 		rb := &sheets.ClearValuesRequest{}
 		_, err := srv.Spreadsheets.Values.Clear(spreadsheetId, ranges, rb).Context(context.Background()).Do()
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return err
 		}
 	}
+	return nil
 }
