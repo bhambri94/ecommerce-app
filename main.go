@@ -35,7 +35,9 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 	sugar.Infof("calling ecommerce manager api with multiple products!")
 	configs.SetConfig()
 	outputType := ctx.UserValue("outputType")
-	sugar.Infof("Output type of api is:= " + outputType.(string))
+	if outputType != nil {
+		sugar.Infof("Output type of api is:= " + outputType.(string))
+	}
 	productList, err := sheets.BatchGet(configs.Configurations.ProductRequestSheetNameWithRange)
 	if err != nil {
 		ctx.Response.Header.Set("Content-Type", "application/json")
