@@ -802,6 +802,17 @@ func GetHomeDepotMultipleProductData(productList [][]string, storeList [][]strin
 				}
 			}
 
+			SavingCenters := ""
+			for iterator := range homeDepotResponse.PrimaryItemData.AttributeGroups {
+				if homeDepotResponse.PrimaryItemData.AttributeGroups[iterator].GroupType == "notDisplayed" {
+					for iterator2 := range homeDepotResponse.PrimaryItemData.AttributeGroups[iterator].Entries {
+						if homeDepotResponse.PrimaryItemData.AttributeGroups[iterator].Entries[iterator2].Name == "Savings Center" {
+							SavingCenters = homeDepotResponse.PrimaryItemData.AttributeGroups[iterator].Entries[iterator2].Value
+						}
+					}
+				}
+			}
+
 			AttributeGroupValue := ""
 			DimensionName := ""
 			DiscountEndDate := ""
@@ -830,7 +841,7 @@ func GetHomeDepotMultipleProductData(productList [][]string, storeList [][]strin
 				DiscountStartDate = homeDepotResponse.PrimaryItemData.MsbPromotions.PromotionEntry[0].DiscountStartDate
 				PromoLongDescription = homeDepotResponse.PrimaryItemData.MsbPromotions.PromotionEntry[0].PromoLongDescription
 			}
-			row = append(row, homeDepotResponse.PrimaryItemData.ItemExtension.CategoryName, homeDepotResponse.Inventory.Store.Quantity, homeDepotResponse.Inventory.Online.Quantity, Returnable, SpecialPrice, homeDepotResponse.PrimaryItemData.Info.Upc, homeDepotResponse.PrimaryItemData.Info.ProductLabel, homeDepotResponse.PrimaryItemData.Info.BrandName, homeDepotResponse.Inventory.Store.IsLimitedQuantity, OriginalPrice, DollarOff, homeDepotResponse.PrimaryItemData.AvailabilityType, homeDepotResponse.PrimaryItemData.Shipping.BossEstimatedShippingEndDate, homeDepotResponse.PrimaryItemData.Shipping.SthEstimatedShippingStartDate, homeDepotResponse.PrimaryItemData.Shipping.SthEstimatedShippingEndDate, homeDepotResponse.PrimaryItemData.Shipping.FreeShippingThreshold, homeDepotResponse.PrimaryItemData.Shipping.ExcludedShipStates, homeDepotResponse.PrimaryItemData.Shipping.FreeShippingMessage, homeDepotResponse.PrimaryItemData.Shipping.BossEstimatedShippingStartDate, homeDepotResponse.PrimaryItemData.WebURL, homeDepotResponse.PrimaryItemData.RatingsReviews.TotalReviews, homeDepotResponse.PrimaryItemData.RatingsReviews.AverageRating, homeDepotResponse.PrimaryItemData.Info.Description, homeDepotResponse.PrimaryItemData.Info.BuyOnlineShipToStoreEligible, homeDepotResponse.PrimaryItemData.Info.IsTopSeller, homeDepotResponse.PrimaryItemData.Info.BuyOnlinePickupInStoreEligible, homeDepotResponse.PrimaryItemData.Info.ModelNumber, homeDepotResponse.PrimaryItemData.Info.VendorNumber, AttributeGroupValue, DimensionName, DimensionValueName, DiscountEndDate, PromoLongDescription, DiscountStartDate, imageLinks)
+			row = append(row, homeDepotResponse.PrimaryItemData.ItemExtension.CategoryName, homeDepotResponse.Inventory.Store.Quantity, homeDepotResponse.Inventory.Online.Quantity, Returnable, SavingCenters, SpecialPrice, homeDepotResponse.PrimaryItemData.Info.Upc, homeDepotResponse.PrimaryItemData.Info.ProductLabel, homeDepotResponse.PrimaryItemData.Info.BrandName, homeDepotResponse.Inventory.Store.IsLimitedQuantity, OriginalPrice, DollarOff, homeDepotResponse.PrimaryItemData.AvailabilityType, homeDepotResponse.PrimaryItemData.Shipping.BossEstimatedShippingEndDate, homeDepotResponse.PrimaryItemData.Shipping.SthEstimatedShippingStartDate, homeDepotResponse.PrimaryItemData.Shipping.SthEstimatedShippingEndDate, homeDepotResponse.PrimaryItemData.Shipping.FreeShippingThreshold, homeDepotResponse.PrimaryItemData.Shipping.ExcludedShipStates, homeDepotResponse.PrimaryItemData.Shipping.FreeShippingMessage, homeDepotResponse.PrimaryItemData.Shipping.BossEstimatedShippingStartDate, homeDepotResponse.PrimaryItemData.WebURL, homeDepotResponse.PrimaryItemData.RatingsReviews.TotalReviews, homeDepotResponse.PrimaryItemData.RatingsReviews.AverageRating, homeDepotResponse.PrimaryItemData.Info.Description, homeDepotResponse.PrimaryItemData.Info.BuyOnlineShipToStoreEligible, homeDepotResponse.PrimaryItemData.Info.IsTopSeller, homeDepotResponse.PrimaryItemData.Info.BuyOnlinePickupInStoreEligible, homeDepotResponse.PrimaryItemData.Info.ModelNumber, homeDepotResponse.PrimaryItemData.Info.VendorNumber, AttributeGroupValue, DimensionName, DimensionValueName, DiscountEndDate, PromoLongDescription, DiscountStartDate, imageLinks)
 			finalValues = append(finalValues, row)
 		}
 	}
