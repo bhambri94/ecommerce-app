@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/anaskhan96/soup"
 	"github.com/bhambri94/ecommerce-app/configs"
 	"github.com/bhambri94/ecommerce-app/homedepot"
 	"github.com/bhambri94/ecommerce-app/sheets"
@@ -26,6 +27,8 @@ func main() {
 
 	router := fasthttprouter.New()
 	router.GET("/v1/homedepot/multipleproduct", handleMultipleProduct)
+	router.GET("/v1/homedepot/search", handleSearch)
+	router.GET("/v1/ebay/search", handleEbaySearch)
 	router.GET("/v1/homedepot/multipleproduct/output=:outputType", handleMultipleProduct)
 	log.Fatal(fasthttp.ListenAndServe(":3001", router.Handler))
 }
@@ -108,4 +111,54 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody([]byte("Failed! There is an issue with Request sent for api call."))
 		sugar.Infof("Failed! ecommerce manager api failed!")
 	}
+}
+
+func handleSearch(ctx *fasthttp.RequestCtx) {
+	resp, err := soup.Get("https://www.homedepot.com/b/N-5yc1v/Ntk-EnrichedProductInfo/Ntt-cotton?NCNI-5&experienceName=default&Nao=168&Ns=None")
+
+	if err != nil {
+		// os.Exit(1)
+		fmt.Println("Nothing found")
+	} else {
+		doc := soup.HTMLParse(resp)
+		allProdCount := doc.Find("span", "id", "allProdCount").Text()
+		fmt.Println(allProdCount)
+		// span id allProdCount
+		links := doc.Find("div", "class", "pod-plp__container")
+		products := links.FindAll("div", "data-component", "productpod")
+		// data - component = "productpod"
+		// pod-plp__container--alignment-resetwith__certona
+		for _, link := range products {
+			fmt.Println(link.Attrs()["data-productid"])
+		}
+		// fmt.Println(products)
+	}
+
+}
+
+func handleEbaySearch(ctx *fasthttp.RequestCtx) {
+	resp, err := soup.Get("https://www.ebay.com/sch/i.html?_from=R40&_trksid=p2499334.m570.l1313&_nkw=iphone&_sacat=20349")
+
+	if err != nil {
+		// os.Exit(1)
+		fmt.Println("Nothing found")
+	} else {
+		doc := soup.HTMLParse(resp)
+		allProdCount := doc.Find("h1", "class", "srp-controls__count-heading")
+		count := allProdCount.FindAll("span")
+		for _, c := range count {
+			fmt.Println(c.Text())
+		}
+		fmt.Println(count)
+		// span id allProdCount
+		// links := doc.Find("div", "class", "pod-plp__container")
+		products := doc.FindAll("a", "class", "s-item__link")
+		// data - component = "productpod"
+		// pod-plp__container--alignment-resetwith__certona
+		for _, link := range products {
+			fmt.Println(link.Attrs()["href"])
+		}
+		// fmt.Println(products)
+	}
+
 }
