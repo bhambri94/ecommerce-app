@@ -2,7 +2,6 @@ package homedepot
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -724,13 +723,25 @@ func GetHomeDepotMultipleProductData(productList [][]string, storeList [][]strin
 	for i := range productList {
 		j := 0
 		for j = range storeList {
+			var row []interface{}
+			storeID := storeList[j][0]
+			itemID := productList[i][0]
+			loc, _ := time.LoadLocation("America/Bogota")
+			currentTime := time.Now().In(loc)
+			// currentTime := time.Date(2020, time.July, 1, 18, 59, 59, 0, time.UTC) //This can be used to manually fill a sheet with from desired date
+			row = append(row, currentTime.Format("2006-01-02 15:04:05"), storeID, itemID)
 			if len(storeList[j]) <= 0 {
-				return nil, errors.New("Store list missing in Request Google Sheets")
+				fmt.Println(("Store list missing in Request Google Sheets"))
+				finalValues = append(finalValues, row)
+				continue
+				// return nil, errors.New("Store list missing in Request Google Sheets")
 			}
 			if len(productList[i]) <= 0 {
-				return nil, errors.New("Product list missing in Request Google Sheets")
+				fmt.Println("Product list missing in Request Google Sheets")
+				finalValues = append(finalValues, row)
+				continue
+				// return nil, errors.New("Product list missing in Request Google Sheets")
 			}
-			storeID := storeList[j][0]
 			Cookie := "HD_DC=origin; bm_sz=D933413D6B61E866E16EEEBBBD5D555F~YAAQyN44fXtwtdhzAQAAztf82AjnLwoltXV6mpwDLtu0mxeGsnZULbuXY7+rrBAN8SGLGzmJagTwwbMomHLd9LH5bT9AYEr/2KMQegiKivy+GIZ8BVN6aw5eNEV8x+xeNmK44C2Pq3F+nwGLmrPtcIKjfsqnApYGrqKlqdjER6o/wy3XGHw8YuPZwOBpWXDwxRt8; THD_NR=1; THD_SESSION=; THD_CACHE_NAV_SESSION=; THD_CACHE_NAV_PERSIST=; check=true; AMCVS_F6421253512D2C100A490D45%40AdobeOrg=1; WORKFLOW=GEO_LOCATION; THD_FORCE_LOC=1; THD_INTERNAL=0; DELIVERY_ZIP=96913; THD_PERSIST=C4%3D" + storeID + "%2BGuam%20-%20Tamuning%20-%20Tamuning%2C%20GU%2B%3A%3BC4_EXP%3D1628609317%3A%3BC24%3D96913%3A%3BC24_EXP%3D1628609317%3A%3BC39%3D1%3B7%3A00-20%3A00%3B2%3B6%3A00-21%3A00%3B3%3B6%3A00-21%3A00%3B4%3B6%3A00-21%3A00%3B5%3B6%3A00-21%3A00%3B6%3B6%3A00-21%3A00%3B7%3B6%3A00-21%3A00%3A%3BC39_EXP%3D1597076917; THD_LOCALIZER=%7B%22WORKFLOW%22%3A%22GEO_LOCATION%22%2C%22THD_FORCE_LOC%22%3A%221%22%2C%22THD_INTERNAL%22%3A%220%22%2C%22THD_STRFINDERZIP%22%3A%2296913%22%2C%22THD_LOCSTORE%22%3A%221710%2BGuam%20-%20Tamuning%20-%20Tamuning%2C%20GU%2B%22%2C%22THD_STORE_HOURS%22%3A%221%3B7%3A00-20%3A00%3B2%3B6%3A00-21%3A00%3B3%3B6%3A00-21%3A00%3B4%3B6%3A00-21%3A00%3B5%3B6%3A00-21%3A00%3B6%3B6%3A00-21%3A00%3B7%3B6%3A00-21%3A00%22%2C%22THD_STORE_HOURS_EXPIRY%22%3A1597076917%7D; _pxvid=291e881c-db1e-11ea-b4bf-0242ac120005; thda.s=72cb0c5c-3dda-a400-f2f5-93f7116d1e63; thda.u=a37756ef-14a8-ed1c-3a67-3a2b717565fb; ak_bmsc=89609659092818FF7E985C3664D7194F7D38DEC86C5F0000A367315F2F2C413B~plb62Mk1slFeK9p8TVLPPQJFbQcEb3lo3NFcbSSoFz7r049tRe+FqubdAxjzlcukyN5/rL9jk0ntf4oXbdtsnJz9tE/siUbOHx8VdtLc95QalM+bE42AqFSU+dTm131uISgALHoziV3+8lJgC7UgJxvw6u4PaaKeeWQJh3pvhF8rOilozHsG79q+k+wGm9j+hNdTP4BRrali+5ppT8OwDG6TleNyvvp3dANYHO4hXtZb4SEcQHDp76AlglOb/VDl3E; _abck=CE6278AB62773D597362F7D2B3DEBC0E~0~YAAQyN44fYlwtdhzAQAABOD82AT1nVwvlPbMn09bgoV4EfbRuZeX1y4NyhKoYy9vz0keGx2Gp+FIo4Bn21ylgAocFRDFwjGma51lpTWbWsNQ8CkW+F+4MdJsFZem+DoO+aS74NkwXcvtZtuLbIerSpTKx6oI+9/8i4hnonCvf/j40RRQwf/8ORVqGzx5byjNc5GoyTqMfdwvDIPg8sgfKvUkv9D7BHRUKF3botyZBRTf7zihiK7CCs15v3lLlgsw+31u0vIP52F4NUb8PjKG2OfDvNb3rNA0ufI0qbdNJdKS/Qdaf2Zz8EEiN5+RSc5J9jEinPavhUJs+g==~-1~-1~-1; _px_f394gi7Fvmc43dfg_user_id=Mjk5NGEyNTEtZGIxZS0xMWVhLTk0ODktNmZlNzhlODI0ZTE1; RES_TRACKINGID=36632330381337079; ResonanceSegment=; RES_SESSIONID=72154150381337079; ajs_user_id=null; ajs_group_id=null; ajs_anonymous_id=%22d9ab20d3-708e-4e9d-884f-2b980df9a686%22; _meta_bing_beaconFired=true; _meta_facebookPixel_beaconFired=true; _gcl_au=1.1.1437797179.1597073320; ftr_ncd=6; QSI_HistorySession=https%3A%2F%2Fwww.homedepot.com%2Fp%2FMilwaukee-M18-FUEL-120-MPH-450-CFM-18-Volt-Lithium-Ion-Brushless-Cordless-Handheld-Blower-Tool-Only-2724-20%2F302752040~1597073320612; AMCV_F6421253512D2C100A490D45%40AdobeOrg=1585540135%7CMCIDTS%7C18485%7CMCMID%7C35670817154508997331213643943760871573%7CMCAAMLH-1597678120%7C12%7CMCAAMB-1597678120%7CRKhpRz8krg2tLO6pguXWp5olkAcUniQYPHaMWWgdJ3xzPWQmdj0y%7CMCOPTOUT-1597080520s%7CNONE%7CMCCIDH%7C172712820%7CvVersion%7C4.4.0; _meta_pinterest_epik=dj0yJnU9d05XaVI3TWlmLVQ0QnFTeHVkRkNnS2toNk1TbHkyQTcmbj1JTlRtQUpFWkZCbGMxTWR3R3BxNVBBJm09MSZ0PUFBQUFBRjh4WjZjJnJtPTEmcnQ9QUFBQUFGOHhaNmM; _meta_revjet_revjet_vid=4961946459097064000; aam_mobile=seg%3D1131078; aam_uuid=35959978601500025281202714362026421984; _meta_criteo_userId=Rj-FFdPI4xtnbz8-uKO266Q5vKUgmWks; _meta_mediaMath_mm_id=d0eb5d22-f864-4d00-b015-f81e4c80ae45; _meta_mediaMath_cid=d0eb5d22-f864-4d00-b015-f81e4c80ae45; _meta_amnet_uid=5573507722726040061; _ga=GA1.2.633436542.1597073321; _gid=GA1.2.568460109.1597073321; QuantumMetricUserID=2fcb28195be36292240261fa3a3fb47d; QuantumMetricSessionID=c22a75f61f04d3f1219648584f95b948; LPVID=QyZTAyZjMxNGI3ZWY3MDBk; LPSID-31564604=u8lPe1sOQfmF6g-G1Gmf9A; _meta_adobe_aam_uuid=35959978601500025281202714362026421984; mbox=session#6803e51076de49bb974712cb45d1cf94#1597075276|PC#6803e51076de49bb974712cb45d1cf94.31_0#1660318117; _px=H5TtyrokynGm0xZ8VnbRvIRtYIJ6MvBSOuTOQR9xIhodFc82766Yn2o7SFbGf1GfZoq1xP0wktwIg0O+G/BNQA==:1000:kAHErd/1qWUpNn5bQLbtw9r1mpBD95/lhqx/z25rAwnTvlmUaRq1sUf4LYiF7fyuGlsPfGC3Zmln6DcDCSrkcER7DTj9448xXSYNl6lsbfkjYY179JPwlpRccdSKClTzmWOa+Fvcmp476p0z09DyP4m0VdyGvxJgNjQ76bWwfDOZ5h36aweu3OMrJhb1vlrqbvbx80Wg3F1nHQAKJW/joVoiXuG9bd0+SK3At3IwfNazpdFINnBsjFI1BhHdEV5ey67DFM5q2o6VpDx/Ed7QYA==; s_pers=%20productnum%3D1%7C1599665318868%3B%20s_nr365%3D1597073417914-New%7C1628609417914%3B%20s_dslv%3D1597073417921%7C1691681417921%3B; s_sess=%20stsh%3D%3B%20s_pv_pName%3Dproductdetails%253E302752040%3B%20s_pv_pType%3Dpip%3B%20s_pv_cmpgn%3D%3B%20s_cc%3Dtrue%3B; _meta_mediaMath_iframe_counter=3; forterToken=640fce6dab2d475c91c80f273376b9ed_1597073417951__UDF43_9ck; _px_4946459675_cs=eyJpZCI6IjI5OTQ1NDMwLWRiMWUtMTFlYS05NDg5LTZmZTc4ZTgyNGUxNSIsInN0b3JhZ2UiOnt9LCJleHBpcmF0aW9uIjoxNTk3MDc1NjkxODE4fQ==; _pxde=6e624cc55fc1a20bd3fb6d477a0232a81102f7d4d84b291714a5942fca59d955:eyJ0aW1lc3RhbXAiOjE1OTcwNzM4OTMzMTF9; akaau=1597074193~id=7585bff3cb571847323335006e1ee492; bm_sv=67B4BD82E3C07565D9C966B534F53950~SRQIMfQu0qB+XuC4kxuDGg1mtgowuHmZFA1ijc4z2RT6fwwaxeXFuKICPhy63+0318AJAAcxo/7PsPaoQ7Sg/jGh8l+icBOajdURDqPQDKAczQY3bV5dG02O+ojfzojJ17OYs876L6XWWPOAxC0c8ypv1+5xp60X7iRJfuPVfrk=; IN_STORE_API_SESSION=TRUE; akaau=1597074756~id=570e6607324d97f43aff334a687ef720; bm_sv=67B4BD82E3C07565D9C966B534F53950~SRQIMfQu0qB+XuC4kxuDGg1mtgowuHmZFA1ijc4z2RT6fwwaxeXFuKICPhy63+0318AJAAcxo/7PsPaoQ7Sg/jGh8l+icBOajdURDqPQDKB01Zf137gHE7JiOZKKo/sLZ5v33xatSoFD0VeF/1OvvX3lI2J8uwwHSHHmyTujUYw=; _abck=CE6278AB62773D597362F7D2B3DEBC0E~-1~YAAQyN44fZ+JtdhzAQAA0T0O2QSpbesPatxFjVR5gmDxtyb1Pmp5BnIeh/+ggFLpWb/whyotqoyArNJSunSQQayxXQVeXIjSi89P4zO8QcMSXRLvADNin46chyAG0jGiQNpG/YvUuLK+DAopT5NO9NvQ2mj7WOqI/FoAwoEjo6Ap2e0KOjllQyhShzo6rImJEnhvaG7xtHxte0yul/OTIahfnwfXGm3DNkacQ5xS4H97HNpnv54PrWSgi+Jmybq5bPrKmKuffIhjS3DDCzbVZ4DZ1uaV52d61LvNuckShPu0+qRjwM0L8dr39N35ZpUEPatLOLfADrK3dg==~0~-1~-1; akaau=1597160858~id=5d84ab426f4dc213c48a00d290401967; _abck=CE6278AB62773D597362F7D2B3DEBC0E~-1~YAAQT9cLF5Ss/45zAQAA3Q8w3gSR0CK+O35uM2K5kZcckE1rq9bg7JHcnFRMZIhKwxuIuTMIx+N6S3MMwU7pbVEQHRxk2+hVw9liPqz/rB2OBPicKXxRwT/qK78fQZqPQQklPInnLwqsPLkuOEGbnfXy/RfKQrypOZWkTyBt1iDm33beCtjInYzQs+skq+2egELaX1D2H2Mp+qC10LSp2mjb2tfxPHKu4Fj4i+Orj7tAEfQ0I19VVbHEaqJW2RRU+C9EbpZJadLtiZm4Sxb00lYt+evrnjtfF0F0npGMz25eEjT16J3320BJKiWAN0fCcoYTarCmLVPmvg==~0~-1~-1"
 			url := "https://www.homedepot.com/p/svcs/frontEndModel/" + productList[i][0] + "?_=" + strconv.Itoa(int(epoch)) + "000"
 			method := "GET"
@@ -740,7 +751,9 @@ func GetHomeDepotMultipleProductData(productList [][]string, storeList [][]strin
 
 			if err != nil {
 				fmt.Println(err)
-				return nil, err
+				// return nil, err
+				finalValues = append(finalValues, row)
+				continue
 			}
 			req.Header.Add("authority", "www.homedepot.com")
 			req.Header.Add("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36")
@@ -755,13 +768,15 @@ func GetHomeDepotMultipleProductData(productList [][]string, storeList [][]strin
 			defer res.Body.Close()
 			body, err := ioutil.ReadAll(res.Body)
 			if err != nil {
-				return nil, err
+				finalValues = append(finalValues, row)
+				continue
 			}
 			var homeDepotResponse HomeDepotResponse
 			err = json.Unmarshal(body, &homeDepotResponse)
 			if err != nil {
 				fmt.Println("whoops:", err)
-				return nil, err
+				finalValues = append(finalValues, row)
+				continue
 			}
 			imageLinks := ""
 			for imageIterator := range homeDepotResponse.PrimaryItemData.Media.MediaList {
@@ -775,8 +790,18 @@ func GetHomeDepotMultipleProductData(productList [][]string, storeList [][]strin
 					}
 				}
 			}
-			var row []interface{}
-			itemID := ""
+
+			Returnable := ""
+			for iterator := range homeDepotResponse.PrimaryItemData.AttributeGroups {
+				if homeDepotResponse.PrimaryItemData.AttributeGroups[iterator].GroupType == "functional details" {
+					for iterator2 := range homeDepotResponse.PrimaryItemData.AttributeGroups[iterator].Entries {
+						if homeDepotResponse.PrimaryItemData.AttributeGroups[iterator].Entries[iterator2].Name == "Returnable" {
+							Returnable = homeDepotResponse.PrimaryItemData.AttributeGroups[iterator].Entries[iterator2].Value
+						}
+					}
+				}
+			}
+
 			AttributeGroupValue := ""
 			DimensionName := ""
 			DiscountEndDate := ""
@@ -787,7 +812,6 @@ func GetHomeDepotMultipleProductData(productList [][]string, storeList [][]strin
 			var OriginalPrice float64
 			var DollarOff float64
 			if len(homeDepotResponse.PrimaryItemData.StoreSkus) > 1 {
-				itemID = homeDepotResponse.PrimaryItemData.StoreSkus[0].ItemID
 				SpecialPrice = homeDepotResponse.PrimaryItemData.StoreSkus[0].Pricing.SpecialPrice
 				OriginalPrice = homeDepotResponse.PrimaryItemData.StoreSkus[0].Pricing.OriginalPrice
 				DollarOff = homeDepotResponse.PrimaryItemData.StoreSkus[0].Pricing.DollarOff
@@ -806,7 +830,7 @@ func GetHomeDepotMultipleProductData(productList [][]string, storeList [][]strin
 				DiscountStartDate = homeDepotResponse.PrimaryItemData.MsbPromotions.PromotionEntry[0].DiscountStartDate
 				PromoLongDescription = homeDepotResponse.PrimaryItemData.MsbPromotions.PromotionEntry[0].PromoLongDescription
 			}
-			row = append(row, storeID, itemID, homeDepotResponse.PrimaryItemData.ItemExtension.CategoryName, homeDepotResponse.Inventory.Store.Quantity, homeDepotResponse.Inventory.Online.Quantity, SpecialPrice, homeDepotResponse.PrimaryItemData.Info.Upc, homeDepotResponse.PrimaryItemData.Info.ProductLabel, homeDepotResponse.PrimaryItemData.Info.BrandName, homeDepotResponse.Inventory.Store.IsLimitedQuantity, OriginalPrice, DollarOff, homeDepotResponse.PrimaryItemData.AvailabilityType, homeDepotResponse.PrimaryItemData.Shipping.BossEstimatedShippingEndDate, homeDepotResponse.PrimaryItemData.Shipping.SthEstimatedShippingStartDate, homeDepotResponse.PrimaryItemData.Shipping.SthEstimatedShippingEndDate, homeDepotResponse.PrimaryItemData.Shipping.FreeShippingThreshold, homeDepotResponse.PrimaryItemData.Shipping.ExcludedShipStates, homeDepotResponse.PrimaryItemData.Shipping.FreeShippingMessage, homeDepotResponse.PrimaryItemData.Shipping.BossEstimatedShippingStartDate, homeDepotResponse.PrimaryItemData.WebURL, homeDepotResponse.PrimaryItemData.RatingsReviews.TotalReviews, homeDepotResponse.PrimaryItemData.RatingsReviews.AverageRating, homeDepotResponse.PrimaryItemData.Info.Description, homeDepotResponse.PrimaryItemData.Info.BuyOnlineShipToStoreEligible, homeDepotResponse.PrimaryItemData.Info.IsTopSeller, homeDepotResponse.PrimaryItemData.Info.BuyOnlinePickupInStoreEligible, homeDepotResponse.PrimaryItemData.Info.ModelNumber, homeDepotResponse.PrimaryItemData.Info.VendorNumber, AttributeGroupValue, DimensionName, DimensionValueName, DiscountEndDate, PromoLongDescription, DiscountStartDate, imageLinks)
+			row = append(row, homeDepotResponse.PrimaryItemData.ItemExtension.CategoryName, homeDepotResponse.Inventory.Store.Quantity, homeDepotResponse.Inventory.Online.Quantity, Returnable, SpecialPrice, homeDepotResponse.PrimaryItemData.Info.Upc, homeDepotResponse.PrimaryItemData.Info.ProductLabel, homeDepotResponse.PrimaryItemData.Info.BrandName, homeDepotResponse.Inventory.Store.IsLimitedQuantity, OriginalPrice, DollarOff, homeDepotResponse.PrimaryItemData.AvailabilityType, homeDepotResponse.PrimaryItemData.Shipping.BossEstimatedShippingEndDate, homeDepotResponse.PrimaryItemData.Shipping.SthEstimatedShippingStartDate, homeDepotResponse.PrimaryItemData.Shipping.SthEstimatedShippingEndDate, homeDepotResponse.PrimaryItemData.Shipping.FreeShippingThreshold, homeDepotResponse.PrimaryItemData.Shipping.ExcludedShipStates, homeDepotResponse.PrimaryItemData.Shipping.FreeShippingMessage, homeDepotResponse.PrimaryItemData.Shipping.BossEstimatedShippingStartDate, homeDepotResponse.PrimaryItemData.WebURL, homeDepotResponse.PrimaryItemData.RatingsReviews.TotalReviews, homeDepotResponse.PrimaryItemData.RatingsReviews.AverageRating, homeDepotResponse.PrimaryItemData.Info.Description, homeDepotResponse.PrimaryItemData.Info.BuyOnlineShipToStoreEligible, homeDepotResponse.PrimaryItemData.Info.IsTopSeller, homeDepotResponse.PrimaryItemData.Info.BuyOnlinePickupInStoreEligible, homeDepotResponse.PrimaryItemData.Info.ModelNumber, homeDepotResponse.PrimaryItemData.Info.VendorNumber, AttributeGroupValue, DimensionName, DimensionValueName, DiscountEndDate, PromoLongDescription, DiscountStartDate, imageLinks)
 			finalValues = append(finalValues, row)
 		}
 	}

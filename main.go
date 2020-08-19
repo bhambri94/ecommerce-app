@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/bhambri94/ecommerce-app/configs"
@@ -66,7 +65,7 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 			defer writer.Flush()
 
 			stringfinalValues := make([][]string, len(finalValues)+5)
-			header := []string{"StoreId", "Item Id", "Category", "Store Quantity", "Online Quantity", "SpecialPrice", "Upc", "ProductLabel", "BrandName", "IsLimitedQuantity", "OriginalPrice", "DollarOff", "AvailabilityType", "BossEstimatedShippingEndDate", "SthEstimatedShippingStartDate", "SthEstimatedShippingEndDate", "FreeShippingThreshold", "ExcludedShipStates", "FreeShippingMessage", "BossEstimatedShippingStartDate", "WebURL", "TotalReviews", "AverageRating", "Description", "BuyOnlineShipToStoreEligible", "IsTopSeller", "BuyOnlinePickupInStoreEligible", "ModelNumber", "VendorNumber", "AttributeValue", "DimensionName", "DimensionValue Name", "DiscountEndDate", "PromoLongDescription", "DiscountStartDate", "Image Links"}
+			header := []string{"HomeDepot_Refresh_time", "StoreId", "Item Id", "Category", "Store Quantity", "Online Quantity", "Returnable", "SpecialPrice", "Upc", "ProductLabel", "BrandName", "IsLimitedQuantity", "OriginalPrice", "DollarOff", "AvailabilityType", "BossEstimatedShippingEndDate", "SthEstimatedShippingStartDate", "SthEstimatedShippingEndDate", "FreeShippingThreshold", "ExcludedShipStates", "FreeShippingMessage", "BossEstimatedShippingStartDate", "WebURL", "TotalReviews", "AverageRating", "Description", "BuyOnlineShipToStoreEligible", "IsTopSeller", "BuyOnlinePickupInStoreEligible", "ModelNumber", "VendorNumber", "AttributeValue", "DimensionName", "DimensionValue Name", "DiscountEndDate", "PromoLongDescription", "DiscountStartDate", "Image Links"}
 			writer.Write(header)
 			i := 0
 			for i < len(finalValues) {
@@ -79,7 +78,9 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 			}
 			ctx.Response.SetStatusCode(200)
 			ctx.Response.Header.Set("Content-Type", "text/csv")
-			ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"HomeDepotCSV"+strconv.Itoa(int(time.Now().Unix()))+".csv")
+			loc, _ := time.LoadLocation("America/Bogota")
+			currentTime := time.Now().In(loc)
+			ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"HomeDepotCSV"+currentTime.Format("2006-01-02 15:04:05")+".csv")
 			ctx.SendFile(CSVName)
 		} else {
 			err := sheets.ClearSheet(configs.Configurations.ClearMultipleProductResponseSheetNameWithRange)
