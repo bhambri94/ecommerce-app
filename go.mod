@@ -3,6 +3,7 @@ module github.com/bhambri94/ecommerce-app
 go 1.14
 
 require (
+	github.com/anaskhan96/soup v1.1.1
 	github.com/buaazp/fasthttprouter v0.1.1
 	github.com/valyala/fasthttp v1.15.1
 	go.uber.org/zap v1.15.0
