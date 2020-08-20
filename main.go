@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/anaskhan96/soup"
@@ -27,7 +29,7 @@ func main() {
 
 	router := fasthttprouter.New()
 	router.GET("/v1/homedepot/multipleproduct", handleMultipleProduct)
-	router.GET("/v1/homedepot/search", handleSearch)
+	router.GET("/v1/homedepot/search/query=:queryString", handleHomedepotSearch)
 	router.GET("/v1/ebay/search", handleEbaySearch)
 	router.GET("/v1/homedepot/multipleproduct/output=:outputType", handleMultipleProduct)
 	log.Fatal(fasthttp.ListenAndServe(":3001", router.Handler))
@@ -68,7 +70,7 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 			defer writer.Flush()
 
 			stringfinalValues := make([][]string, len(finalValues)+5)
-			header := []string{"HomeDepot_Refresh_time", "StoreId", "Item Id", "Category", "Store Quantity", "Online Quantity", "Returnable", "SpecialPrice", "Upc", "ProductLabel", "BrandName", "IsLimitedQuantity", "OriginalPrice", "DollarOff", "AvailabilityType", "BossEstimatedShippingEndDate", "SthEstimatedShippingStartDate", "SthEstimatedShippingEndDate", "FreeShippingThreshold", "ExcludedShipStates", "FreeShippingMessage", "BossEstimatedShippingStartDate", "WebURL", "TotalReviews", "AverageRating", "Description", "BuyOnlineShipToStoreEligible", "IsTopSeller", "BuyOnlinePickupInStoreEligible", "ModelNumber", "VendorNumber", "AttributeValue", "DimensionName", "DimensionValue Name", "DiscountEndDate", "PromoLongDescription", "DiscountStartDate", "Image Links"}
+			header := []string{"HomeDepot_Refresh_time", "StoreId", "Item Id", "Category", "Store Quantity", "Online Quantity", "Returnable", "Savings Center", "SpecialPrice", "Upc", "ProductLabel", "BrandName", "IsLimitedQuantity", "OriginalPrice", "DollarOff", "AvailabilityType", "BossEstimatedShippingEndDate", "SthEstimatedShippingStartDate", "SthEstimatedShippingEndDate", "FreeShippingThreshold", "ExcludedShipStates", "FreeShippingMessage", "BossEstimatedShippingStartDate", "WebURL", "TotalReviews", "AverageRating", "Description", "BuyOnlineShipToStoreEligible", "IsTopSeller", "BuyOnlinePickupInStoreEligible", "ModelNumber", "VendorNumber", "AttributeValue", "DimensionName", "DimensionValue Name", "DiscountEndDate", "PromoLongDescription", "DiscountStartDate", "Image Links"}
 			writer.Write(header)
 			i := 0
 			for i < len(finalValues) {
@@ -113,26 +115,93 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-func handleSearch(ctx *fasthttp.RequestCtx) {
-	resp, err := soup.Get("https://www.homedepot.com/b/N-5yc1v/Ntk-EnrichedProductInfo/Ntt-cotton?NCNI-5&experienceName=default&Nao=168&Ns=None")
-
-	if err != nil {
-		// os.Exit(1)
-		fmt.Println("Nothing found")
-	} else {
-		doc := soup.HTMLParse(resp)
-		allProdCount := doc.Find("span", "id", "allProdCount").Text()
-		fmt.Println(allProdCount)
-		// span id allProdCount
-		links := doc.Find("div", "class", "pod-plp__container")
-		products := links.FindAll("div", "data-component", "productpod")
-		// data - component = "productpod"
-		// pod-plp__container--alignment-resetwith__certona
-		for _, link := range products {
-			fmt.Println(link.Attrs()["data-productid"])
-		}
-		// fmt.Println(products)
+func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
+	sugar.Infof("calling ecommerce manager api for homedepot search!")
+	loc, _ := time.LoadLocation("America/Bogota")
+	queryString := ctx.UserValue("queryString")
+	if queryString != nil {
+		queryString = queryString.(string)[1 : len(queryString.(string))-1]
+		sugar.Infof("queryString for search is := " + queryString.(string))
 	}
+	CSVName := "HomeDepotSearchCSV.csv"
+	f, err := os.Create(CSVName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	writer := csv.NewWriter(f)
+	defer writer.Flush()
+
+	header := []string{"HD_Refresh_time", "Product HDs"}
+	writer.Write(header)
+
+	loopCounter := 1
+	pageCounter := 0
+	firstApiCall := true
+	for interator := 0; interator < loopCounter; interator++ {
+		var allProdCountInt int
+		url := "https://www.homedepot.com/b/N-5yc1v/Ntk-EnrichedProductInfo/Ntt-" + queryString.(string) + "?NCNI-5&experienceName=default&Nao=" + strconv.Itoa(pageCounter*24) + "&Ns=None"
+		resp, err := soup.Get(url)
+		if err != nil {
+			fmt.Println("Unable to call the homedepot apis")
+		}
+
+		doc := soup.HTMLParse(resp)
+		if firstApiCall {
+			fmt.Println(url)
+			a := doc.Find("span", "id", "allProdCountq")
+			if a.Error != nil {
+				fmt.Println(a)
+			}
+			var allProdCount string
+			allProductRoot := doc.Find("span", "id", "allProdCount")
+			if allProductRoot.Error == nil {
+				allProdCount = allProductRoot.Text()
+			} else {
+				break
+			}
+			fmt.Println(allProdCount)
+			allProdCount = strings.Replace(allProdCount, ",", "", -1)
+			allProdCountInt, err = strconv.Atoi(allProdCount)
+			if err != nil {
+				fmt.Println("Unable to convert all count to Integer")
+				break
+			}
+			if allProdCountInt%24 > 0 {
+				fmt.Println(allProdCountInt)
+				loopCounter = allProdCountInt / 24
+				loopCounter++
+				fmt.Println(loopCounter)
+			} else {
+				loopCounter = allProdCountInt / 24
+			}
+			firstApiCall = false
+		}
+		stringfinalValues := make([][]string, (loopCounter*24)+5)
+		links := doc.Find("div", "class", "pod-plp__container")
+		if links.Error == nil {
+			products := links.FindAll("div", "data-component", "productpod")
+			i := 0
+			for _, link := range products {
+				currentTime := time.Now().In(loc)
+				if link.Error == nil {
+					stringfinalValues[i] = append(stringfinalValues[i], currentTime.Format("2006-01-02 15:04:05"), link.Attrs()["data-productid"])
+					writer.Write(stringfinalValues[i])
+					i++
+				} else {
+					continue
+				}
+			}
+		} else {
+			continue
+		}
+
+	}
+	ctx.Response.SetStatusCode(200)
+	ctx.Response.Header.Set("Content-Type", "text/csv")
+	currentTime := time.Now().In(loc)
+	ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"HomeDepotCSV"+currentTime.Format("2006-01-02 15:04:05")+".csv")
+	ctx.SendFile(CSVName)
+	pageCounter++
 
 }
 
