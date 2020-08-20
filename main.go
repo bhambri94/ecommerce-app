@@ -61,7 +61,9 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 	finalValues, err := homedepot.GetHomeDepotMultipleProductData(productList, storeList)
 	if err == nil {
 		if outputType == nil {
-			CSVName := "HomeDepotCSV.csv"
+			loc, _ := time.LoadLocation("America/Bogota")
+			currentTime := time.Now().In(loc)
+			CSVName := "HomeDepotCSV" + currentTime.Format("2006-01-02 15:04:05") + ".csv"
 			f, err := os.Create(CSVName)
 			if err != nil {
 				log.Fatal(err)
@@ -123,7 +125,8 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 		queryString = queryString.(string)[1 : len(queryString.(string))-1]
 		sugar.Infof("queryString for search is := " + queryString.(string))
 	}
-	CSVName := "HomeDepotSearchCSV.csv"
+	currentTime := time.Now().In(loc)
+	CSVName := "HomeDepotSearchCSV" + currentTime.Format("2006-01-02 15:04:05") + ".csv"
 	f, err := os.Create(CSVName)
 	if err != nil {
 		log.Fatal(err)
