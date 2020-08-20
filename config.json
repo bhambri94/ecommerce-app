@@ -1,8 +1,8 @@
 {
     "SpreadsheetID" : "1Dr1qTo-o89MtKEBKF4QfLl0Esw8HJNE_cj5_dcZdzEk",
     "SheetNameWithRange" : "Pricing!A2",
-    "ProductRequestSheetNameWithRange":"MultipleHDsRequest!A2:A5000",
-    "StoreRequestSheetNameWithRange":"MultipleHDsRequest!B2:B5000",
+    "ProductRequestSheetNameWithRange":"MultipleHDsRequest!A2:A50000",
+    "StoreRequestSheetNameWithRange":"MultipleHDsRequest!B2:B50000",
     "MultipleProductResponseSheetNameWithRange":"MultipleHDsResponse!A2",
     "ClearMultipleProductResponseSheetNameWithRange":"MultipleHDsResponse!A2:ZZ10000"
 }
