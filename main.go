@@ -85,8 +85,8 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 			}
 			ctx.Response.SetStatusCode(200)
 			ctx.Response.Header.Set("Content-Type", "text/csv")
-			loc, _ := time.LoadLocation("America/Bogota")
-			currentTime := time.Now().In(loc)
+			loc, _ = time.LoadLocation("America/Bogota")
+			currentTime = time.Now().In(loc)
 			ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"HomeDepotCSV"+currentTime.Format("2006-01-02 15:04:05")+".csv")
 			ctx.SendFile(CSVName)
 		} else {
@@ -201,7 +201,7 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 	}
 	ctx.Response.SetStatusCode(200)
 	ctx.Response.Header.Set("Content-Type", "text/csv")
-	currentTime := time.Now().In(loc)
+	currentTime = time.Now().In(loc)
 	ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"HomeDepotCSV"+currentTime.Format("2006-01-02 15:04:05")+".csv")
 	ctx.SendFile(CSVName)
 	pageCounter++
