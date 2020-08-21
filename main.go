@@ -140,21 +140,18 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 	loopCounter := 1
 	pageCounter := 0
 	firstApiCall := true
+	productMap := make(map[string]bool)
 	for interator := 0; interator < loopCounter; interator++ {
 		var allProdCountInt int
-		url := "https://www.homedepot.com/b/N-5yc1v/Ntk-EnrichedProductInfo/Ntt-" + queryString.(string) + "?NCNI-5&experienceName=default&Nao=" + strconv.Itoa(pageCounter*24) + "&Ns=None"
+		url := "https://www.homedepot.com/b/N-5yc1v/Ntk-EnrichedProductInfo/Ntt-" + queryString.(string) + "?NCNI-5&experienceName=default&Nao=" + strconv.Itoa(pageCounter*24) + "&Ns=None&storeSelection=6312,284,249,6356,258"
 		resp, err := soup.Get(url)
 		if err != nil {
 			fmt.Println("Unable to call the homedepot apis")
 		}
-
+		pageCounter++
 		doc := soup.HTMLParse(resp)
 		if firstApiCall {
 			fmt.Println(url)
-			a := doc.Find("span", "id", "allProdCountq")
-			if a.Error != nil {
-				fmt.Println(a)
-			}
 			var allProdCount string
 			allProductRoot := doc.Find("span", "id", "allProdCount")
 			if allProductRoot.Error == nil {
@@ -187,8 +184,11 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 			for _, link := range products {
 				currentTime := time.Now().In(loc)
 				if link.Error == nil {
-					stringfinalValues[i] = append(stringfinalValues[i], currentTime.Format("2006-01-02 15:04:05"), link.Attrs()["data-productid"])
-					writer.Write(stringfinalValues[i])
+					if !productMap[link.Attrs()["data-productid"]] {
+						stringfinalValues[i] = append(stringfinalValues[i], currentTime.Format("2006-01-02 15:04:05"), link.Attrs()["data-productid"])
+						writer.Write(stringfinalValues[i])
+						productMap[link.Attrs()["data-productid"]] = true
+					}
 					i++
 				} else {
 					continue
@@ -204,7 +204,6 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 	currentTime = time.Now().In(loc)
 	ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"HomeDepotCSV"+currentTime.Format("2006-01-02 15:04:05")+".csv")
 	ctx.SendFile(CSVName)
-	pageCounter++
 
 }
 
