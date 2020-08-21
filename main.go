@@ -134,7 +134,7 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 	writer := csv.NewWriter(f)
 	defer writer.Flush()
 
-	header := []string{"HD_Refresh_time", "Product HDs"}
+	header := []string{"HD_Refresh_time", "Product HDs", "Description", "Brand", "Model Number", "Price", "Ratings", "Reviews Count"}
 	writer.Write(header)
 
 	loopCounter := 1
@@ -186,9 +186,86 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 				if link.Error == nil {
 					if !productMap[link.Attrs()["data-productid"]] {
 						stringfinalValues[i] = append(stringfinalValues[i], currentTime.Format("2006-01-02 15:04:05"), link.Attrs()["data-productid"])
-						writer.Write(stringfinalValues[i])
 						productMap[link.Attrs()["data-productid"]] = true
+						innerTile := link.Find("div", "class", "pod-inner")
+						if innerTile.Error == nil {
+							tileInfo := innerTile.Find("div", "class", "plp-pod__info")
+							if tileInfo.Error == nil {
+								tileDescription := tileInfo.Find("div", "class", "pod-plp__description")
+								if tileDescription.Error == nil {
+									AnchorTag := tileDescription.Find("a")
+									if AnchorTag.Error == nil {
+										SpanText := AnchorTag.Find("span", "class", "pod-plp__brand-name")
+										ProductTitle := AnchorTag.Text()
+										ProductTitle = strings.Replace(ProductTitle, "\n", "", -1)
+										ProductTitle = strings.Replace(ProductTitle, "     ", "", -1)
+										stringfinalValues[i] = append(stringfinalValues[i], ProductTitle)
+										if SpanText.Error == nil {
+											BrandCopy := SpanText.Text()
+											stringfinalValues[i] = append(stringfinalValues[i], BrandCopy)
+										}
+									}
+								}
+								tileModel := tileInfo.Find("div", "class", "pod-plp__model")
+								if tileModel.Error == nil {
+									ModelNumber := tileModel.Text()
+									ModelNumber = strings.Replace(ModelNumber, "\n", "", -1)
+									ModelNumber = strings.Replace(ModelNumber, "      ", "", -1)
+									ModelNumber = strings.Replace(ModelNumber, " &nbsp;", "", -1)
+									stringfinalValues[i] = append(stringfinalValues[i], ModelNumber)
+								}
+								priceWrapper1 := tileInfo.Find("div", "class", "price__wrapper")
+								if priceWrapper1.Error == nil {
+									priceWrapper2 := priceWrapper1.Find("div", "class", "if__overflow")
+									if priceWrapper2.Error == nil {
+										priceWrapper3 := priceWrapper2.Find("div")
+										if priceWrapper3.Error == nil {
+											priceWrapper4 := priceWrapper3.Find("div")
+											if priceWrapper4.Error == nil {
+												Price := priceWrapper4.Text()
+												Cents := priceWrapper4.FindAll("span", "class", "price__format")
+												for iter, c := range Cents {
+													if iter == 1 {
+														if Cents[iter].Error == nil {
+															Price = Price + "." + c.Text()
+															stringfinalValues[i] = append(stringfinalValues[i], Price)
+														}
+													}
+												}
+
+											}
+										}
+									}
+								}
+								RatingsWrapper := tileInfo.Find("div", "class", "pod-plp__ratings")
+								if RatingsWrapper.Error == nil {
+									Anchor := RatingsWrapper.FindAll("a")
+									for iter, a := range Anchor {
+										if iter == 0 {
+											if Anchor[iter].Error == nil {
+												RatingsSpan := a.Find("span", "class", "stars")
+												if RatingsSpan.Error == nil {
+													Ratings := RatingsSpan.Attrs()["rel"]
+													stringfinalValues[i] = append(stringfinalValues[i], Ratings)
+												}
+											}
+										}
+										if iter == 1 {
+											if Anchor[iter].Error == nil {
+												ReviewsCount := a.Text()
+												ReviewsCount = strings.Replace(ReviewsCount, "\n", "", -1)
+												ReviewsCount = strings.Replace(ReviewsCount, "(", "", -1)
+												ReviewsCount = strings.Replace(ReviewsCount, ")", "", -1)
+												stringfinalValues[i] = append(stringfinalValues[i], ReviewsCount)
+											}
+										}
+									}
+
+								}
+							}
+						}
 					}
+					writer.Write(stringfinalValues[i])
 					i++
 				} else {
 					continue
@@ -204,6 +281,13 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 	currentTime = time.Now().In(loc)
 	ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"HomeDepotCSV"+currentTime.Format("2006-01-02 15:04:05")+".csv")
 	ctx.SendFile(CSVName)
+	err = os.Remove(CSVName)
+	if err != nil {
+		fmt.Println("Unable to delete file")
+	} else {
+		fmt.Println("File Deleted")
+
+	}
 
 }
 
