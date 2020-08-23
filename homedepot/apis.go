@@ -765,6 +765,10 @@ func GetHomeDepotMultipleProductData(productList [][]string, storeList [][]strin
 			req.Header.Add("accept-language", "en-GB,en-US;q=0.9,en;q=0.8")
 			req.Header.Add("cookie", Cookie)
 			res, err := client.Do(req)
+			if err != nil {
+				finalValues = append(finalValues, row)
+				continue
+			}
 			defer res.Body.Close()
 			body, err := ioutil.ReadAll(res.Body)
 			if err != nil {
