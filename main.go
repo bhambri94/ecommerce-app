@@ -144,15 +144,21 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 	stringfinalValuesIterator := 0
 	productMap := make(map[string]bool)
 	for priceIterator <= len(priceslabs) {
-		if priceIterator == len(priceslabs) {
-			strParts := strings.Split(priceslabs[priceIterator-1], "-")
-			lowerBound = strParts[1]
-			upperBound = "50000"
+		if len(priceslabs) > 0 {
+			if priceIterator == len(priceslabs) {
+				strParts := strings.Split(priceslabs[priceIterator-1], "-")
+				lowerBound = strParts[1]
+				upperBound = "50000"
+			} else {
+				strParts := strings.Split(priceslabs[priceIterator], "-")
+				lowerBound = strParts[0]
+				upperBound = strParts[1]
+			}
 		} else {
-			strParts := strings.Split(priceslabs[priceIterator], "-")
-			lowerBound = strParts[0]
-			upperBound = strParts[1]
+			lowerBound = "0"
+			upperBound = "50000"
 		}
+
 		loopCounter := 1
 		pageCounter := 0
 		firstApiCall := true
