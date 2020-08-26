@@ -136,145 +136,161 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 
 	header := []string{"HD_Refresh_time", "Product HDs", "Description", "Brand", "Model Number", "Price", "Ratings", "Reviews Count"}
 	writer.Write(header)
-
-	loopCounter := 1
-	pageCounter := 0
-	firstApiCall := true
+	lowerBound := "0"
+	upperBound := "10"
+	priceslabs := getHomeDepotPriceSlabs(queryString.(string))
+	priceIterator := 0
+	stringfinalValues := make([][]string, 55000)
+	stringfinalValuesIterator := 0
 	productMap := make(map[string]bool)
-	for interator := 0; interator < loopCounter; interator++ {
-		var allProdCountInt int
-		url := "https://www.homedepot.com/b/N-5yc1v/Ntk-EnrichedProductInfo/Ntt-" + queryString.(string) + "?NCNI-5&experienceName=default&Nao=" + strconv.Itoa(pageCounter*24) + "&Ns=None&storeSelection=6312,284,249,6356,258"
-		resp, err := soup.Get(url)
-		if err != nil {
-			fmt.Println("Unable to call the homedepot apis")
+	for priceIterator <= len(priceslabs) {
+		if priceIterator == len(priceslabs) {
+			strParts := strings.Split(priceslabs[priceIterator-1], "-")
+			lowerBound = strParts[1]
+			upperBound = "50000"
+		} else {
+			strParts := strings.Split(priceslabs[priceIterator], "-")
+			lowerBound = strParts[0]
+			upperBound = strParts[1]
 		}
-		pageCounter++
-		doc := soup.HTMLParse(resp)
-		if firstApiCall {
-			fmt.Println(url)
-			var allProdCount string
-			allProductRoot := doc.Find("span", "id", "allProdCount")
-			if allProductRoot.Error == nil {
-				allProdCount = allProductRoot.Text()
-			} else {
-				break
-			}
-			fmt.Println(allProdCount)
-			allProdCount = strings.Replace(allProdCount, ",", "", -1)
-			allProdCountInt, err = strconv.Atoi(allProdCount)
+		loopCounter := 1
+		pageCounter := 0
+		firstApiCall := true
+		for interator := 0; interator < loopCounter; interator++ {
+			var allProdCountInt int
+			url := "https://www.homedepot.com/b/N-5yc1v/Ntk-EnrichedProductInfo/Ntt-" + queryString.(string) + "?NCNI-5&experienceName=default&Nao=" + strconv.Itoa(pageCounter*24) + "&Ns=None&storeSelection=6312,284,249,6356,258&lowerBound=" + lowerBound + "&upperBound=" + upperBound
+			resp, err := soup.Get(url)
 			if err != nil {
-				fmt.Println("Unable to convert all count to Integer")
-				break
+				fmt.Println("Unable to call the homedepot apis")
 			}
-			if allProdCountInt%24 > 0 {
-				fmt.Println(allProdCountInt)
-				loopCounter = allProdCountInt / 24
-				loopCounter++
-				fmt.Println(loopCounter)
-			} else {
-				loopCounter = allProdCountInt / 24
+			pageCounter++
+			doc := soup.HTMLParse(resp)
+			if firstApiCall {
+				fmt.Println(url)
+				var allProdCount string
+				allProductRoot := doc.Find("span", "id", "allProdCount")
+				if allProductRoot.Error == nil {
+					allProdCount = allProductRoot.Text()
+				} else {
+					break
+				}
+				allProdCount = strings.Replace(allProdCount, ",", "", -1)
+				allProdCountInt, err = strconv.Atoi(allProdCount)
+				if err != nil {
+					fmt.Println("Unable to convert all count to Integer")
+					break
+				}
+				if allProdCountInt%24 > 0 {
+					loopCounter = allProdCountInt / 24
+					loopCounter++
+				} else {
+					loopCounter = allProdCountInt / 24
+				}
+				firstApiCall = false
 			}
-			firstApiCall = false
-		}
-		stringfinalValues := make([][]string, (loopCounter*24)+5)
-		links := doc.Find("div", "class", "pod-plp__container")
-		if links.Error == nil {
-			products := links.FindAll("div", "data-component", "productpod")
-			i := 0
-			for _, link := range products {
-				currentTime := time.Now().In(loc)
-				if link.Error == nil {
-					if !productMap[link.Attrs()["data-productid"]] {
-						stringfinalValues[i] = append(stringfinalValues[i], currentTime.Format("2006-01-02 15:04:05"), link.Attrs()["data-productid"])
-						productMap[link.Attrs()["data-productid"]] = true
-						innerTile := link.Find("div", "class", "pod-inner")
-						if innerTile.Error == nil {
-							tileInfo := innerTile.Find("div", "class", "plp-pod__info")
-							if tileInfo.Error == nil {
-								tileDescription := tileInfo.Find("div", "class", "pod-plp__description")
-								if tileDescription.Error == nil {
-									AnchorTag := tileDescription.Find("a")
-									if AnchorTag.Error == nil {
-										SpanText := AnchorTag.Find("span", "class", "pod-plp__brand-name")
-										ProductTitle := AnchorTag.Text()
-										ProductTitle = strings.Replace(ProductTitle, "\n", "", -1)
-										ProductTitle = strings.Replace(ProductTitle, "     ", "", -1)
-										stringfinalValues[i] = append(stringfinalValues[i], ProductTitle)
-										if SpanText.Error == nil {
-											BrandCopy := SpanText.Text()
-											stringfinalValues[i] = append(stringfinalValues[i], BrandCopy)
+			links := doc.Find("div", "class", "pod-plp__container")
+			if links.Error == nil {
+				products := links.FindAll("div", "data-component", "productpod")
+				i := 0
+				for _, link := range products {
+					currentTime := time.Now().In(loc)
+					if link.Error == nil {
+						if !productMap[link.Attrs()["data-productid"]] {
+							stringfinalValues[stringfinalValuesIterator] = append(stringfinalValues[stringfinalValuesIterator], currentTime.Format("2006-01-02 15:04:05"), link.Attrs()["data-productid"])
+							productMap[link.Attrs()["data-productid"]] = true
+							innerTile := link.Find("div", "class", "pod-inner")
+							if innerTile.Error == nil {
+								tileInfo := innerTile.Find("div", "class", "plp-pod__info")
+								if tileInfo.Error == nil {
+									tileDescription := tileInfo.Find("div", "class", "pod-plp__description")
+									if tileDescription.Error == nil {
+										AnchorTag := tileDescription.Find("a")
+										if AnchorTag.Error == nil {
+											SpanText := AnchorTag.Find("span", "class", "pod-plp__brand-name")
+											ProductTitle := AnchorTag.Text()
+											ProductTitle = strings.Replace(ProductTitle, "\n", "", -1)
+											ProductTitle = strings.Replace(ProductTitle, "     ", "", -1)
+											stringfinalValues[stringfinalValuesIterator] = append(stringfinalValues[stringfinalValuesIterator], ProductTitle)
+											if SpanText.Error == nil {
+												BrandCopy := SpanText.Text()
+												stringfinalValues[stringfinalValuesIterator] = append(stringfinalValues[stringfinalValuesIterator], BrandCopy)
+											}
 										}
 									}
-								}
-								tileModel := tileInfo.Find("div", "class", "pod-plp__model")
-								if tileModel.Error == nil {
-									ModelNumber := tileModel.Text()
-									ModelNumber = strings.Replace(ModelNumber, "\n", "", -1)
-									ModelNumber = strings.Replace(ModelNumber, "      ", "", -1)
-									ModelNumber = strings.Replace(ModelNumber, " &nbsp;", "", -1)
-									stringfinalValues[i] = append(stringfinalValues[i], ModelNumber)
-								}
-								priceWrapper1 := tileInfo.Find("div", "class", "price__wrapper")
-								if priceWrapper1.Error == nil {
-									priceWrapper2 := priceWrapper1.Find("div", "class", "if__overflow")
-									if priceWrapper2.Error == nil {
-										priceWrapper3 := priceWrapper2.Find("div")
-										if priceWrapper3.Error == nil {
-											priceWrapper4 := priceWrapper3.Find("div")
-											if priceWrapper4.Error == nil {
-												Price := priceWrapper4.Text()
-												Cents := priceWrapper4.FindAll("span", "class", "price__format")
-												for iter, c := range Cents {
-													if iter == 1 {
-														if Cents[iter].Error == nil {
-															Price = Price + "." + c.Text()
-															stringfinalValues[i] = append(stringfinalValues[i], Price)
+									tileModel := tileInfo.Find("div", "class", "pod-plp__model")
+									if tileModel.Error == nil {
+										ModelNumber := tileModel.Text()
+										ModelNumber = strings.Replace(ModelNumber, "\n", "", -1)
+										ModelNumber = strings.Replace(ModelNumber, "      ", "", -1)
+										ModelNumber = strings.Replace(ModelNumber, " &nbsp;", "", -1)
+										stringfinalValues[stringfinalValuesIterator] = append(stringfinalValues[stringfinalValuesIterator], ModelNumber)
+									}
+									priceWrapper1 := tileInfo.Find("div", "class", "price__wrapper")
+									if priceWrapper1.Error == nil {
+										priceWrapper2 := priceWrapper1.Find("div", "class", "if__overflow")
+										if priceWrapper2.Error == nil {
+											priceWrapper3 := priceWrapper2.Find("div")
+											if priceWrapper3.Error == nil {
+												priceWrapper4 := priceWrapper3.Find("div")
+												if priceWrapper4.Error == nil {
+													Price := priceWrapper4.Text()
+													Cents := priceWrapper4.FindAll("span", "class", "price__format")
+													for iter, c := range Cents {
+														if iter == 1 {
+															if Cents[iter].Error == nil {
+																Price = Price + "." + c.Text()
+																stringfinalValues[stringfinalValuesIterator] = append(stringfinalValues[stringfinalValuesIterator], Price)
+															}
 														}
 													}
-												}
 
-											}
-										}
-									}
-								}
-								RatingsWrapper := tileInfo.Find("div", "class", "pod-plp__ratings")
-								if RatingsWrapper.Error == nil {
-									Anchor := RatingsWrapper.FindAll("a")
-									for iter, a := range Anchor {
-										if iter == 0 {
-											if Anchor[iter].Error == nil {
-												RatingsSpan := a.Find("span", "class", "stars")
-												if RatingsSpan.Error == nil {
-													Ratings := RatingsSpan.Attrs()["rel"]
-													stringfinalValues[i] = append(stringfinalValues[i], Ratings)
 												}
 											}
 										}
-										if iter == 1 {
-											if Anchor[iter].Error == nil {
-												ReviewsCount := a.Text()
-												ReviewsCount = strings.Replace(ReviewsCount, "\n", "", -1)
-												ReviewsCount = strings.Replace(ReviewsCount, "(", "", -1)
-												ReviewsCount = strings.Replace(ReviewsCount, ")", "", -1)
-												stringfinalValues[i] = append(stringfinalValues[i], ReviewsCount)
+									}
+									RatingsWrapper := tileInfo.Find("div", "class", "pod-plp__ratings")
+									if RatingsWrapper.Error == nil {
+										Anchor := RatingsWrapper.FindAll("a")
+										for iter, a := range Anchor {
+											if iter == 0 {
+												if Anchor[iter].Error == nil {
+													RatingsSpan := a.Find("span", "class", "stars")
+													if RatingsSpan.Error == nil {
+														Ratings := RatingsSpan.Attrs()["rel"]
+														stringfinalValues[stringfinalValuesIterator] = append(stringfinalValues[stringfinalValuesIterator], Ratings)
+													}
+												}
+											}
+											if iter == 1 {
+												if Anchor[iter].Error == nil {
+													ReviewsCount := a.Text()
+													ReviewsCount = strings.Replace(ReviewsCount, "\n", "", -1)
+													ReviewsCount = strings.Replace(ReviewsCount, "(", "", -1)
+													ReviewsCount = strings.Replace(ReviewsCount, ")", "", -1)
+													stringfinalValues[stringfinalValuesIterator] = append(stringfinalValues[stringfinalValuesIterator], ReviewsCount)
+												}
 											}
 										}
-									}
 
+									}
 								}
 							}
 						}
+						if len(stringfinalValues[stringfinalValuesIterator]) > 0 {
+							writer.Write(stringfinalValues[stringfinalValuesIterator])
+						}
+						i++
+					} else {
+						i++
+						continue
 					}
-					writer.Write(stringfinalValues[i])
-					i++
-				} else {
-					continue
+					stringfinalValuesIterator++
 				}
+			} else {
+				continue
 			}
-		} else {
-			continue
 		}
-
+		priceIterator++
 	}
 	ctx.Response.SetStatusCode(200)
 	ctx.Response.Header.Set("Content-Type", "text/csv")
@@ -316,4 +332,40 @@ func handleEbaySearch(ctx *fasthttp.RequestCtx) {
 		// fmt.Println(products)
 	}
 
+}
+
+func getHomeDepotPriceSlabs(queryString string) []string {
+	var slabs []string
+	url := "https://www.homedepot.com/b/N-5yc1v/Ntk-EnrichedProductInfo/Ntt-" + queryString + "?NCNI-5&experienceName=default&Ns=None&storeSelection=6312,284,249,6356,258"
+	resp, err := soup.Get(url)
+	if err != nil {
+		fmt.Println("Nothing found")
+	} else {
+		doc := soup.HTMLParse(resp)
+		if doc.Error == nil {
+			topDiv := doc.Find("div", "data-group", "Price")
+			if topDiv.Error == nil {
+				listItems := topDiv.Find("div", "class", "refinement-content")
+				if listItems.Error == nil {
+					allPrices := listItems.Find("ul", "data-refinement", "Price")
+					if allPrices.Error == nil {
+						priceSlabs := allPrices.FindAll("li", "class", "state-active")
+						for _, price := range priceSlabs {
+							slab := price.Find("a").Attrs()["data-refinementvalue"]
+							slab = strings.Replace(slab, "$", "", -1)
+							slab = strings.Replace(slab, " - ", "-", -1)
+							if slab[0] == 'O' || slab[0] == 'S' {
+								continue
+							}
+							slabs = append(slabs, slab)
+						}
+					}
+
+				}
+
+			}
+
+		}
+	}
+	return slabs
 }
