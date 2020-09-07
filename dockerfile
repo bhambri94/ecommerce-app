@@ -15,6 +15,6 @@ RUN go mod vendor
 
 RUN go build -o ecommerce-app
 
-EXPOSE 3001
+EXPOSE 3002
 
 CMD ["./ecommerce-app"]
