@@ -11,6 +11,7 @@ import (
 
 	"github.com/anaskhan96/soup"
 	"github.com/bhambri94/ecommerce-app/configs"
+	"github.com/bhambri94/ecommerce-app/ebay"
 	"github.com/bhambri94/ecommerce-app/homedepot"
 	"github.com/bhambri94/ecommerce-app/sheets"
 	"github.com/buaazp/fasthttprouter"
@@ -314,28 +315,62 @@ func handleHomedepotSearch(ctx *fasthttp.RequestCtx) {
 }
 
 func handleEbaySearch(ctx *fasthttp.RequestCtx) {
-	resp, err := soup.Get("https://www.ebay.com/sch/i.html?_from=R40&_trksid=p2499334.m570.l1313&_nkw=iphone&_sacat=20349")
-
+	sugar.Infof("calling ebay search api with multiple products!")
+	configs.SetConfig()
+	loc, _ := time.LoadLocation("America/Bogota")
+	currentTime := time.Now().In(loc)
+	CSVName := "EbayPageCSV" + currentTime.Format("2006-01-02 15:04:05") + ".csv"
+	f, err := os.Create(CSVName)
 	if err != nil {
-		// os.Exit(1)
-		fmt.Println("Nothing found")
+		log.Fatal(err)
+	}
+	writer := csv.NewWriter(f)
+	defer writer.Flush()
+	header := []string{"Ebay_Refresh_time", "Product URL", "Product Title", "Price", "Quantity Available", "Items Feedback", "Notification", "Delivery Date", "Returns", "Image URLS", "Product Description Title", "Product Description Body"}
+	writer.Write(header)
+	productUrls, e := sheets.BatchGet("Ebay!A2:A55000")
+	if e != nil {
+		ctx.Response.SetStatusCode(200)
+		ctx.Response.SetBody([]byte("URl format wrong in Sheets"))
+		return
+	}
+	Urls := make([]string, len(productUrls))
+	j := 0
+	for j < len(productUrls) {
+		if len(productUrls[j]) == 1 {
+			Urls[j] = productUrls[j][0]
+		}
+		j++
+	}
+	if len(Urls) < 1 {
+		ctx.Response.SetStatusCode(200)
+		ctx.Response.SetBody([]byte("URl format wrong in Sheets"))
+		return
+	}
+	finalValues := ebay.GetPageDescription(Urls)
+	fmt.Println("ending")
+	fmt.Println(finalValues)
+	stringfinalValues := make([][]string, len(finalValues)+5)
+	i := 0
+	for i < len(finalValues) {
+		for _, value := range finalValues[i] {
+			a := fmt.Sprintf("%v", value)
+			fmt.Println(a)
+			stringfinalValues[i] = append(stringfinalValues[i], a)
+		}
+		writer.Write(stringfinalValues[i])
+		fmt.Println(stringfinalValues[i])
+		i++
+	}
+	ctx.Response.SetStatusCode(200)
+	ctx.Response.Header.Set("Content-Type", "text/csv")
+	ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"EbayPageCSV"+currentTime.Format("2006-01-02 15:04:05")+".csv")
+	ctx.SendFile(CSVName)
+	err = os.Remove(CSVName)
+	if err != nil {
+		fmt.Println("Unable to delete file")
 	} else {
-		doc := soup.HTMLParse(resp)
-		allProdCount := doc.Find("h1", "class", "srp-controls__count-heading")
-		count := allProdCount.FindAll("span")
-		for _, c := range count {
-			fmt.Println(c.Text())
-		}
-		fmt.Println(count)
-		// span id allProdCount
-		// links := doc.Find("div", "class", "pod-plp__container")
-		products := doc.FindAll("a", "class", "s-item__link")
-		// data - component = "productpod"
-		// pod-plp__container--alignment-resetwith__certona
-		for _, link := range products {
-			fmt.Println(link.Attrs()["href"])
-		}
-		// fmt.Println(products)
+		fmt.Println("File Deleted")
 	}
 
 }
