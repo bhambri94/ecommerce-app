@@ -326,7 +326,8 @@ func handleEbaySearch(ctx *fasthttp.RequestCtx) {
 	}
 	writer := csv.NewWriter(f)
 	defer writer.Flush()
-	header := []string{"Ebay_Refresh_time", "Product URL", "Product Title", "Price", "Quantity Available", "Items Feedback", "Notification", "Delivery Date", "Returns", "Image URLS", "Product Description Title", "Product Description Body"}
+	//, "Product Description Title", "Product Description Body"
+	header := []string{"Ebay_Refresh_time", "Product URL", "Product Title", "Price", "Quantity Available", "Items Feedback", "Notification", "Delivery Date", "Returns", "Image URLS", "Product Desciption Content"}
 	writer.Write(header)
 	productUrls, e := sheets.BatchGet("Ebay!A2:A55000")
 	if e != nil {
@@ -348,23 +349,20 @@ func handleEbaySearch(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	finalValues := ebay.GetPageDescription(Urls)
-	fmt.Println("ending")
-	fmt.Println(finalValues)
 	stringfinalValues := make([][]string, len(finalValues)+5)
 	i := 0
 	for i < len(finalValues) {
 		for _, value := range finalValues[i] {
 			a := fmt.Sprintf("%v", value)
-			fmt.Println(a)
 			stringfinalValues[i] = append(stringfinalValues[i], a)
 		}
 		writer.Write(stringfinalValues[i])
-		fmt.Println(stringfinalValues[i])
+		writer.Flush()
 		i++
 	}
 	ctx.Response.SetStatusCode(200)
 	ctx.Response.Header.Set("Content-Type", "text/csv")
-	ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"EbayPageCSV"+currentTime.Format("2006-01-02 15:04:05")+".csv")
+	ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+CSVName)
 	ctx.SendFile(CSVName)
 	err = os.Remove(CSVName)
 	if err != nil {
@@ -372,7 +370,12 @@ func handleEbaySearch(ctx *fasthttp.RequestCtx) {
 	} else {
 		fmt.Println("File Deleted")
 	}
-
+	err = os.Remove(CSVName + ".fasthttp.gz")
+	if err != nil {
+		fmt.Println("Unable to delete file")
+	} else {
+		fmt.Println("File Deleted")
+	}
 }
 
 func getHomeDepotPriceSlabs(queryString string) []string {

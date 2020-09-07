@@ -28,9 +28,10 @@ func GetPageDescription(productUrls []string) [][]interface{} {
 		OutputDelDate := ""
 		OutputReturnMessage := ""
 		OutputDescription := ""
+		DescriptionURL := ""
 		fmt.Println(OutputDescription)
 		OutputImageURLS := ""
-		OutputHeader := ""
+		// OutputHeader := ""
 		resp, err := soup.Get(productUrls[iterator])
 		if err != nil {
 			fmt.Println("Nothing found")
@@ -96,11 +97,12 @@ func GetPageDescription(productUrls []string) [][]interface{} {
 				}
 				currenttime := time.Now()
 				epoch := currenttime.Unix()
-				URL := "https://vi.vipr.ebaydesc.com/ws/eBayISAPI.dll?ViewItemDescV4&item=" + ItemID + "&t=" + strconv.Itoa(int(epoch)) + "000&seller=onebigoutlet&excSoj=1&excTrk=1&lsite=0&ittenable=false&domain=ebay.com&descgauge=1&cspheader=1&oneClk=2&secureDesc=1&oversion=819e9518"
-				OutputHeader, OutputDescription, _ = ExampleScrape(URL)
+				DescriptionURL = "https://vi.vipr.ebaydesc.com/ws/eBayISAPI.dll?ViewItemDescV4&item=" + ItemID + "&t=" + strconv.Itoa(int(epoch)) + "000&seller=onebigoutlet&excSoj=1&excTrk=1&lsite=0&ittenable=false&domain=ebay.com&descgauge=1&cspheader=1&oneClk=2&secureDesc=1&oversion=819e9518"
+				// _, OutputDescription, _ = ExampleScrape(DescriptionURL)
 			}
 		}
-		row = append(row, OutputProductTitle, OutputProductPrice, OutputQuanity, OutputItemsFeedback, OutputNotification, OutputDelDate, OutputReturnMessage, OutputImageURLS, OutputHeader, OutputDescription)
+		//, OutputHeader, "OutputDescription"
+		row = append(row, OutputProductTitle, OutputProductPrice, OutputQuanity, OutputItemsFeedback, OutputNotification, OutputDelDate, OutputReturnMessage, OutputImageURLS, DescriptionURL)
 		finalValues = append(finalValues, row)
 		iterator++
 	}
