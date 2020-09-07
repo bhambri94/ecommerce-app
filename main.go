@@ -33,7 +33,7 @@ func main() {
 	router.GET("/v1/homedepot/search/query=:queryString", handleHomedepotSearch)
 	router.GET("/v1/ebay/search", handleEbaySearch)
 	router.GET("/v1/homedepot/multipleproduct/output=:outputType", handleMultipleProduct)
-	log.Fatal(fasthttp.ListenAndServe(":3002", router.Handler))
+	log.Fatal(fasthttp.ListenAndServe(":7001", router.Handler))
 }
 
 func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
