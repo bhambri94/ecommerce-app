@@ -218,10 +218,10 @@ func FindAllImages(URL string) string {
 			Value = Value[:Index] + "s-l1000.jpg"
 		}
 		if ImageAvailable {
-			Images = Images + Value + " - "
+			Images = Images + Value + " , "
 		}
 	})
-	return Images
+	return "'" + Images + "'"
 }
 
 func stripSpaces(str string) string {
