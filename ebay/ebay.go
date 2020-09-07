@@ -52,13 +52,11 @@ func GetPageDescription(productUrls []string) [][]interface{} {
 					OutputQuanity = stripSpaces(Qty.Text())
 				}
 			}
-			ItemsFeedback := doc.Find("span", "class", "vi-qtyS-hot-red")
-			if ItemsFeedback.Error == nil {
-				ItemQty := ItemsFeedback.Find("a")
-				if ItemQty.Error == nil {
-					OutputItemsFeedback = ItemQty.Text()
-				}
+			Out := doc.Find("a", "class", "vi-txt-underline")
+			if Out.Error == nil {
+				OutputItemsFeedback = Out.Text()
 			}
+
 			Notification := doc.Find("div", "id", "vi_notification_new")
 			if Notification.Error == nil {
 				NotificationSpan := Notification.Find("span")
@@ -85,13 +83,28 @@ func GetPageDescription(productUrls []string) [][]interface{} {
 					end := strings.Index(resp[start:len(resp)], "<span")
 					if end != -1 {
 						OutputDelDate = resp[start+17:start+end] + " "
-						start = strings.Index(resp, "vi-acc-del-range")
-						if start != -1 {
-							end = strings.Index(resp[start:len(resp)], "</span>")
-							if end != -1 {
-								OutputDelDate = OutputDelDate + resp[start+22:start+end-4]
-							}
+					}
+				}
+				start = strings.Index(resp, "vi-acc-del-range")
+				if start != -1 {
+					end := strings.Index(resp[start:len(resp)], "</span")
+					if end != -1 {
+						if OutputDelDate != "" {
+							OutputDelDate = OutputDelDate + resp[start+22:start+end-4]
+						} else {
+							OutputDelDate = "Estimated on or before " + resp[start+22:start+end-4]
 						}
+					}
+					start = strings.Index(OutputDelDate, "<span")
+					if start != -1 {
+						OutputDelDate = OutputDelDate[:start]
+						OutputDelDate = strings.Replace(OutputDelDate, "</b>", "", -1)
+						OutputDelDate = strings.Replace(OutputDelDate, "</strong>", "", -1)
+						OutputDelDate = strings.Replace(OutputDelDate, "<strong class=", "", -1)
+						OutputDelDate = strings.Replace(OutputDelDate, "vi-acc-del-range", "", -1)
+						OutputDelDate = strings.Replace(OutputDelDate, ">", "", -1)
+						OutputDelDate = strings.Replace(OutputDelDate, "\\", "", -1)
+						OutputDelDate = strings.Replace(OutputDelDate, "\"\"", "", -1)
 
 					}
 				}
