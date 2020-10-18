@@ -75,7 +75,7 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 			defer writer.Flush()
 
 			stringfinalValues := make([][]string, len(finalValues)+5)
-			header := []string{"HomeDepot_Refresh_time", "StoreId", "Item Id", "Category", "Store Quantity", "Online Quantity", "Returnable", "Savings Center", "SpecialPrice", "Upc", "ProductLabel", "BrandName", "IsLimitedQuantity", "OriginalPrice", "DollarOff", "AvailabilityType", "BossEstimatedShippingEndDate", "SthEstimatedShippingStartDate", "SthEstimatedShippingEndDate", "FreeShippingThreshold", "ExcludedShipStates", "FreeShippingMessage", "BossEstimatedShippingStartDate", "WebURL", "TotalReviews", "AverageRating", "Description", "BuyOnlineShipToStoreEligible", "IsTopSeller", "BuyOnlinePickupInStoreEligible", "ModelNumber", "VendorNumber", "AttributeValue", "DimensionName", "DimensionValue Name", "DiscountEndDate", "PromoLongDescription", "DiscountStartDate", "Image Links"}
+			header := []string{"HomeDepot_Refresh_time", "StoreId", "Item Id", "Online Quantity", "SpecialPrice", "FreeShippingMessage", "Category", "Store Quantity", "Returnable", "Savings Center", "Upc", "ProductLabel", "BrandName", "IsLimitedQuantity", "OriginalPrice", "DollarOff", "AvailabilityType", "BossEstimatedShippingEndDate", "SthEstimatedShippingStartDate", "SthEstimatedShippingEndDate", "FreeShippingThreshold", "ExcludedShipStates", "BossEstimatedShippingStartDate", "WebURL", "TotalReviews", "AverageRating", "Description", "BuyOnlineShipToStoreEligible", "IsTopSeller", "BuyOnlinePickupInStoreEligible", "ModelNumber", "VendorNumber", "AttributeValue", "DimensionName", "DimensionValue Name", "DiscountEndDate", "PromoLongDescription", "DiscountStartDate", "Image Links"}
 			writer.Write(header)
 			i := 0
 			for i < len(finalValues) {
