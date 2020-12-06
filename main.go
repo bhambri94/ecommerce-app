@@ -331,7 +331,7 @@ func handleCostwaySearch(ctx *fasthttp.RequestCtx) {
 	writer := csv.NewWriter(f)
 	defer writer.Flush()
 	//, "Product Description Title", "Product Description Body"
-	header := []string{"Costway_Refresh_time", "Product URL", "Deliver to ZipCode", "Location", "Estimated Delivery", "Reviews", "Ratings Count", "Item Stock Alert"}
+	header := []string{"Costway_Refresh_time", "Product URL", "Item Number", "List/Original Price", "Perc Off", "Deliver to ZipCode", "Location", "Estimated Delivery", "Reviews", "Ratings Count", "Item Stock Alert"}
 	writer.Write(header)
 	productUrls, e := sheets.BatchGet("Costway!A2:A55000")
 	if e != nil {

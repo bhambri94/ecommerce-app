@@ -14,12 +14,15 @@ import (
 func GetPageDescription(productUrls []string) [][]interface{} {
 	var finalValues [][]interface{}
 	loc, _ := time.LoadLocation("America/Bogota")
-	currentTime := time.Now().In(loc)
 	iterator := 0
 	for iterator < len(productUrls) {
 		time.Sleep(1 * time.Second)
 		var row []interface{}
+		currentTime := time.Now().In(loc)
 		row = append(row, currentTime.Format("2006-01-02 15:04:05"), productUrls[iterator])
+		OutputItemNumber := ""
+		OutputListPrice := ""
+		OutputPercOff := ""
 		OutputZipcode := ""
 		OutputCity := ""
 		OutputShippingTime := ""
@@ -33,6 +36,33 @@ func GetPageDescription(productUrls []string) [][]interface{} {
 			fmt.Println("Nothing found")
 		} else {
 			doc := soup.HTMLParse(resp)
+			ItemNumber := doc.Find("div", "class", "orat")
+			if ItemNumber.Error == nil {
+				ItemNumberValue := ItemNumber.FindAll("span")
+				for _, inumber := range ItemNumberValue {
+					if len(inumber.Text()) > 4 {
+						if inumber.Text()[0:4] == "Item" {
+							OutputItemNumber = inumber.Text()
+							OutputItemNumber = strings.ReplaceAll(OutputItemNumber, "Item No: ", "")
+							break
+						}
+					}
+				}
+			}
+			PricingBox := doc.Find("div", "class", "price-box")
+			if PricingBox.Error == nil {
+				OldPrice := PricingBox.Find("p", "class", "old-price")
+				if OldPrice.Error == nil {
+					ListPriceValue := OldPrice.Find("span", "class", "price")
+					if ListPriceValue.Error == nil {
+						OutputListPrice = ListPriceValue.Text()
+					}
+					PercPriceValue := OldPrice.Find("span", "class", "savePrice")
+					if PercPriceValue.Error == nil {
+						OutputPercOff = PercPriceValue.Text()
+					}
+				}
+			}
 			RatingValue := doc.Find("meta", "itemprop", "ratingValue")
 			if RatingValue.Error == nil {
 				OutputRatingValue = RatingValue.Attrs()["content"]
@@ -51,7 +81,7 @@ func GetPageDescription(productUrls []string) [][]interface{} {
 			}
 
 		}
-		row = append(row, OutputZipcode, OutputCity, OutputShippingTime, OutputRatingValue, OutputReviewCount, OutputItemOutOfStock)
+		row = append(row, OutputItemNumber, OutputListPrice, OutputPercOff, OutputZipcode, OutputCity, OutputShippingTime, OutputRatingValue, OutputReviewCount, OutputItemOutOfStock)
 		finalValues = append(finalValues, row)
 		iterator++
 	}
