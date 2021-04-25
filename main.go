@@ -63,7 +63,8 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 	}
 	fmt.Println(productList)
 	fmt.Println(storeList)
-	finalValues, err := homedepot.GetHomeDepotMultipleProductData(productList, storeList)
+	finalValues, err := homedepot.GetHomeDepotMultipleProductDataLatest(productList, storeList)
+	time.Sleep(2 * time.Second)
 	if err == nil {
 		if outputType == nil {
 			loc, _ := time.LoadLocation("America/Bogota")
@@ -77,7 +78,8 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 			defer writer.Flush()
 
 			stringfinalValues := make([][]string, len(finalValues)+5)
-			header := []string{"HomeDepot_Refresh_time", "StoreId", "Item Id", "Online Quantity", "SpecialPrice", "FreeShippingMessage", "Category", "Store Quantity", "Returnable", "Savings Center", "Upc", "ProductLabel", "BrandName", "IsLimitedQuantity", "OriginalPrice", "DollarOff", "AvailabilityType", "BossEstimatedShippingEndDate", "SthEstimatedShippingStartDate", "SthEstimatedShippingEndDate", "FreeShippingThreshold", "ExcludedShipStates", "BossEstimatedShippingStartDate", "WebURL", "TotalReviews", "AverageRating", "Description", "BuyOnlineShipToStoreEligible", "IsTopSeller", "BuyOnlinePickupInStoreEligible", "ModelNumber", "VendorNumber", "AttributeValue", "DimensionName", "DimensionValue Name", "DiscountEndDate", "PromoLongDescription", "DiscountStartDate", "Image Links"}
+			header := []string{"HomeDepot_Refresh_time", "StoreId", "Item Id", "Online Quantity", "SpecialPrice", "FreeShippingMessage", "Category", "Store Quantity", "Returnable", "Savings Center", "Upc", "ProductLabel", "BrandName", "OriginalPrice", "DollarOff", "AvailabilityType", "WebURL", "TotalReviews", "AverageRating", "Description", "ModelNumber", "AttributeValue", "DimensionName", "DimensionValue Name", "DiscountEndDate", "PromoLongDescription", "DiscountStartDate", "Image Links"}
+			//	header := []string{"HomeDepot_Refresh_time", "StoreId", "Item Id", "Online Quantity", "SpecialPrice", "FreeShippingMessage", "Category", "Store Quantity", "Returnable", "Savings Center", "Upc", "ProductLabel", "BrandName", "OriginalPrice", "DollarOff", "AvailabilityType", "BossEstimatedShippingEndDate", "SthEstimatedShippingStartDate", "SthEstimatedShippingEndDate", "FreeShippingThreshold", "ExcludedShipStates", "BossEstimatedShippingStartDate", "WebURL", "TotalReviews", "AverageRating", "Description", "BuyOnlineShipToStoreEligible", "IsTopSeller", "BuyOnlinePickupInStoreEligible", "ModelNumber", "VendorNumber", "AttributeValue", "DimensionName", "DimensionValue Name", "DiscountEndDate", "PromoLongDescription", "DiscountStartDate", "Product Description", "Image Links"}
 			writer.Write(header)
 			i := 0
 			for i < len(finalValues) {
@@ -94,6 +96,18 @@ func handleMultipleProduct(ctx *fasthttp.RequestCtx) {
 			currentTime = time.Now().In(loc)
 			ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+"HomeDepotCSV"+currentTime.Format("2006-01-02 15:04:05")+".csv")
 			ctx.SendFile(CSVName)
+			err = os.Remove(CSVName)
+			if err != nil {
+				fmt.Println("Unable to delete file")
+			} else {
+				fmt.Println("File Deleted")
+			}
+			err = os.Remove(CSVName + ".fasthttp.gz")
+			if err != nil {
+				fmt.Println("Unable to delete file")
+			} else {
+				fmt.Println("File Deleted")
+			}
 		} else {
 			err := sheets.ClearSheet(configs.Configurations.ClearMultipleProductResponseSheetNameWithRange)
 			if err != nil {
