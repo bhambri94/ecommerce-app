@@ -16,6 +16,7 @@ import (
 	"github.com/bhambri94/ecommerce-app/ebay"
 	"github.com/bhambri94/ecommerce-app/homedepot"
 	"github.com/bhambri94/ecommerce-app/sheets"
+	"github.com/bhambri94/ecommerce-app/zoro"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
@@ -34,6 +35,7 @@ func main() {
 	router.GET("/v1/homedepot/multipleproduct", handleMultipleProduct)
 	router.GET("/v1/homedepot/search/query=:queryString", handleHomedepotSearch)
 	router.GET("/v1/ebay/search", handleEbaySearch)
+	router.GET("/v1/zoro/search", handleZoroSearch)
 	router.GET("/v1/costway/search", handleCostwaySearch)
 	router.GET("/v1/amazon/search", handleAmazonSearch)
 	router.GET("/v1/homedepot/multipleproduct/output=:outputType", handleMultipleProduct)
@@ -367,6 +369,68 @@ func handleCostwaySearch(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	finalValues := costway.GetPageDescription(Urls)
+	stringfinalValues := make([][]string, len(finalValues)+5)
+	i := 0
+	for i < len(finalValues) {
+		for _, value := range finalValues[i] {
+			a := fmt.Sprintf("%v", value)
+			stringfinalValues[i] = append(stringfinalValues[i], a)
+		}
+		writer.Write(stringfinalValues[i])
+		writer.Flush()
+		i++
+	}
+	ctx.Response.SetStatusCode(200)
+	ctx.Response.Header.Set("Content-Type", "text/csv")
+	ctx.Response.Header.Set("Content-Disposition", "attachment;filename="+CSVName)
+	ctx.SendFile(CSVName)
+	err = os.Remove(CSVName)
+	if err != nil {
+		fmt.Println("Unable to delete file")
+	} else {
+		fmt.Println("File Deleted")
+	}
+	err = os.Remove(CSVName + ".fasthttp.gz")
+	if err != nil {
+		fmt.Println("Unable to delete file")
+	} else {
+		fmt.Println("File Deleted")
+	}
+}
+func handleZoroSearch(ctx *fasthttp.RequestCtx) {
+	sugar.Infof("calling ebay search api with multiple products!")
+	configs.SetConfig()
+	loc, _ := time.LoadLocation("America/Bogota")
+	currentTime := time.Now().In(loc)
+	CSVName := "ZoroPageCSV" + currentTime.Format("2006-01-02 15:04:05") + ".csv"
+	f, err := os.Create(CSVName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	writer := csv.NewWriter(f)
+	defer writer.Flush()
+	header := []string{"Zoro_Refresh_time", "Product URL", "Product Brand Name", "Product Title", "Price", "Min Quantity Available", "Zoro Item Number", "Zoro MFR Number", "Number of Reviews", "Ratings", "Image URLS", "Product Desciption Content"}
+	writer.Write(header)
+	productUrls, e := sheets.BatchGet("Zoro!A2:A55000")
+	if e != nil {
+		ctx.Response.SetStatusCode(200)
+		ctx.Response.SetBody([]byte("URl format wrong in Sheets"))
+		return
+	}
+	Urls := make([]string, len(productUrls))
+	j := 0
+	for j < len(productUrls) {
+		if len(productUrls[j]) == 1 {
+			Urls[j] = productUrls[j][0]
+		}
+		j++
+	}
+	if len(Urls) < 1 {
+		ctx.Response.SetStatusCode(200)
+		ctx.Response.SetBody([]byte("URl format wrong in Sheets"))
+		return
+	}
+	finalValues := zoro.GetPageDescriptionForZoro(Urls)
 	stringfinalValues := make([][]string, len(finalValues)+5)
 	i := 0
 	for i < len(finalValues) {
